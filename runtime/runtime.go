@@ -1036,10 +1036,10 @@ func (r *interpreterRuntime) writeContract(
 }
 
 func formatContractKey(name string) string {
-	const contractKey = "contract"
+	const contractKey = "code"
 
 	// \x1F = Information Separator One
-	return fmt.Sprintf("%s\x1F%s", contractKey, name)
+	return fmt.Sprintf("%s.%s", contractKey, name)
 }
 
 func (r *interpreterRuntime) loadContract(
