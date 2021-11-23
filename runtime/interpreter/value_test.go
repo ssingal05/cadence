@@ -2965,7 +2965,7 @@ func TestPublicKeyValue(t *testing.T) {
 		)
 
 		require.Equal(t,
-			"PublicKey(publicKey: [1, 7, 3], signatureAlgorithm: SignatureAlgorithm(rawValue: 2), isValid: true)",
+			"PublicKey(publicKey: [1, 7, 3], signatureAlgorithm: SignatureAlgorithm(rawValue: 2))",
 			key.String(),
 		)
 	})
