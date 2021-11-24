@@ -4073,7 +4073,8 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 
 		var argErr *InvalidEntryPointArgumentError
 		require.ErrorAs(t, err, &argErr)
-	})}
+	})
+}
 
 func TestRuntimeImportExportComplex(t *testing.T) {
 
