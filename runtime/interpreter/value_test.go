@@ -2969,6 +2969,62 @@ func TestPublicKeyValue(t *testing.T) {
 			key.String(),
 		)
 	})
+
+	t.Run("Panics when PublicKey is invalid", func(t *testing.T) {
+
+		t.Parallel()
+
+		storage := NewInMemoryStorage()
+
+		inter, err := NewInterpreter(
+			nil,
+			utils.TestLocation,
+			WithStorage(storage),
+			WithPublicKeyValidationHandler(
+				func(_ *Interpreter, _ func() LocationRange, _ *CompositeValue) BoolValue {
+					return false
+				},
+			),
+		)
+		require.NoError(t, err)
+
+		publicKey := NewArrayValue(
+			inter,
+			VariableSizedStaticType{
+				Type: PrimitiveStaticTypeInt,
+			},
+			common.Address{},
+			NewIntValueFromInt64(1),
+			NewIntValueFromInt64(7),
+			NewIntValueFromInt64(3),
+		)
+
+		sigAlgo := NewCompositeValue(
+			inter,
+			nil,
+			sema.SignatureAlgorithmType.QualifiedIdentifier(),
+			sema.SignatureAlgorithmType.Kind,
+			[]CompositeField{
+				{
+					Name:  sema.EnumRawValueFieldName,
+					Value: UInt8Value(sema.SignatureAlgorithmECDSA_secp256k1.RawValue()),
+				},
+			},
+			common.Address{},
+		)
+
+		assert.PanicsWithValue(t,
+			"invalid public key",
+			func() {
+				_ = NewPublicKeyValue(
+					inter,
+					ReturnEmptyLocationRange,
+					publicKey,
+					sigAlgo,
+					inter.PublicKeyValidationHandler,
+				)
+			})
+	})
 }
 
 func TestHashable(t *testing.T) {
