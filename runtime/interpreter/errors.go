@@ -536,3 +536,11 @@ func (e *InterfaceMissingLocationError) Error() string {
 		e.QualifiedIdentifier,
 	)
 }
+
+type InvalidPublicKeyError struct {
+	Value *ArrayValue
+}
+
+func (e *InvalidPublicKeyError) Error() string {
+	return fmt.Sprintf("invalid public key: %s", e.Value)
+}

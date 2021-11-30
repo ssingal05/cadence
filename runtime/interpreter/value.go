@@ -11544,7 +11544,7 @@ func NewPublicKeyValue(
 	// Validate the public key.
 	isValid := validatePublicKey(interpreter, getLocationRange, publicKeyValue)
 	if !isValid {
-		panic("invalid public key")
+		panic(InvalidPublicKeyError{Value: publicKey})
 	}
 
 	// Public key value to string should include the key even though it is a computed field
