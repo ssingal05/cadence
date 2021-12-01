@@ -3213,7 +3213,11 @@ func validatePublicKey(
 	})
 
 	if err != nil {
-		panic(err)
+		panic(interpreter.InvalidPublicKeyError{
+			PublicKey:        fmt.Sprintf("%s", publicKey),
+			LocationRange:    getLocationRange(),
+			OriginatingError: err,
+		})
 	}
 
 	return interpreter.BoolValue(valid)

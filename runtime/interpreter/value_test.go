@@ -2988,15 +2988,17 @@ func TestPublicKeyValue(t *testing.T) {
 		)
 		require.NoError(t, err)
 
+		publicKeyBytes := []byte{1, 7, 3}
+
 		publicKey := NewArrayValue(
 			inter,
 			VariableSizedStaticType{
 				Type: PrimitiveStaticTypeInt,
 			},
 			common.Address{},
-			NewIntValueFromInt64(1),
-			NewIntValueFromInt64(7),
-			NewIntValueFromInt64(3),
+			NewIntValueFromInt64(int64(publicKeyBytes[0])),
+			NewIntValueFromInt64(int64(publicKeyBytes[1])),
+			NewIntValueFromInt64(int64(publicKeyBytes[2])),
 		)
 
 		sigAlgo := NewCompositeValue(
@@ -3014,7 +3016,7 @@ func TestPublicKeyValue(t *testing.T) {
 		)
 
 		assert.PanicsWithValue(t,
-			InvalidPublicKeyError{Value: publicKey},
+			InvalidPublicKeyError{Value: fmt.Sprintf("%s", publicKey)},
 			func() {
 				_ = NewPublicKeyValue(
 					inter,
