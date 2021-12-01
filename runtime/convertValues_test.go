@@ -3763,6 +3763,73 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 		cadence.NewUInt8(2),
 	})
 
+	t.Run("Test importing validates PublicKey", func(t *testing.T) {
+		t.Parallel()
+
+		testPublicKeyImport := func(userSetValidity, publicKeyActualValidity bool) {
+			t.Run(
+				fmt.Sprintf("UserSet(%v)|Actual(%v)", userSetValidity, publicKeyActualValidity),
+				func(t *testing.T) {
+
+					t.Parallel()
+
+					script := `
+                        pub fun main(key: PublicKey): Bool {
+                            return true
+                        }
+                    `
+
+					publicKey := cadence.NewStruct(
+						[]cadence.Value{
+							// PublicKey bytes
+							publicKeyBytes,
+
+							// Sign algorithm
+							cadence.NewEnum(
+								[]cadence.Value{
+									cadence.NewUInt8(0),
+								},
+							).WithType(SignAlgoType),
+						},
+					).WithType(PublicKeyType)
+
+					publicKeyValidated := false
+
+					storage := newTestLedger(nil, nil)
+
+					runtimeInterface := &testRuntimeInterface{
+						storage: storage,
+						decodeArgument: func(b []byte, t cadence.Type) (value cadence.Value, err error) {
+							return json.Decode(b)
+						},
+
+						validatePublicKey: func(publicKey *PublicKey) (bool, error) {
+							publicKeyValidated = true
+							return publicKeyActualValidity, nil
+						},
+					}
+
+					_, err := executeScript(t, script, publicKey, runtimeInterface)
+
+					// runtimeInterface.validatePublicKey() should be called
+					assert.True(t, publicKeyValidated)
+
+					// Invalid PublicKey errors but valid does not.
+					if publicKeyActualValidity {
+						require.NoError(t, err)
+					} else {
+						require.Error(t, err)
+					}
+				},
+			)
+		}
+
+		testPublicKeyImport(true, true)
+		testPublicKeyImport(true, false)
+		testPublicKeyImport(false, true)
+		testPublicKeyImport(false, false)
+	})
+
 	t.Run("Test Verify", func(t *testing.T) {
 		t.Parallel()
 
