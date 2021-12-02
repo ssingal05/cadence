@@ -1095,9 +1095,6 @@ func TestRuntimePublicKey(t *testing.T) {
 				invoked = true
 				return true, nil
 			},
-			validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-				return true, nil
-			},
 		}
 
 		value, err := executeScript(script, runtimeInterface)
