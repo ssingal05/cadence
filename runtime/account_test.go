@@ -19,6 +19,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/onflow/cadence"
 	"github.com/onflow/cadence/encoding/json"
 	"github.com/onflow/cadence/runtime/common"
+	"github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/cadence/runtime/sema"
 	"github.com/onflow/cadence/runtime/stdlib"
 	"github.com/onflow/cadence/runtime/tests/utils"
@@ -1060,6 +1062,44 @@ func TestRuntimePublicKey(t *testing.T) {
 		_, err := executeScript(script, runtimeInterface)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "value of type `PublicKey` has no member `validate`")
+	})
+
+	t.Run("Construct PublicKey in Cadence code", func(t *testing.T) {
+		script := `
+              pub fun main(): PublicKey {
+                  let publicKey = PublicKey(
+                      publicKey: "0102".decodeHex(),
+                      signatureAlgorithm: SignatureAlgorithm.ECDSA_P256
+                  )
+
+                  return publicKey
+              }
+            `
+
+		for _, validity := range []bool{true, false} {
+			invoked := false
+
+			storage := newTestLedger(nil, nil)
+
+			runtimeInterface := &testRuntimeInterface{
+				storage: storage,
+				validatePublicKey: func(publicKey *PublicKey) (bool, error) {
+					invoked = true
+					return validity, nil
+				},
+			}
+
+			_, err := executeScript(script, runtimeInterface)
+			assert.True(t, invoked, "validatePublicKey was invoked")
+
+			if validity {
+				require.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
+				assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+			}
+		}
 	})
 
 	t.Run("Verify", func(t *testing.T) {

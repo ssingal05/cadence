@@ -530,7 +530,7 @@ type InterfaceMissingLocationError struct {
 	QualifiedIdentifier string
 }
 
-func (e *InterfaceMissingLocationError) Error() string {
+func (e InterfaceMissingLocationError) Error() string {
 	return fmt.Sprintf(
 		"tried to look up interface %s without a location",
 		e.QualifiedIdentifier,
@@ -544,7 +544,7 @@ type InvalidPublicKeyError struct {
 	OriginatingError error
 }
 
-func (e *InvalidPublicKeyError) Error() string {
+func (e InvalidPublicKeyError) Error() string {
 	return fmt.Sprintf(
 		"invalid public key at %s: %s. Originating error: %e",
 		e.LocationRange, e.PublicKey, e.OriginatingError,
