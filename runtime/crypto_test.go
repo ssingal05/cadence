@@ -91,9 +91,6 @@ func TestRuntimeCrypto_verify(t *testing.T) {
 			assert.Equal(t, HashAlgorithmSHA3_256, hashAlgorithm)
 			return true, nil
 		},
-		validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-			return true, nil
-		},
 	}
 
 	result, err := runtime.ExecuteScript(
@@ -491,9 +488,6 @@ func TestBLSVerifyPoP(t *testing.T) {
 			called = true
 			return true, nil
 		},
-		validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-			return true, nil
-		},
 	}
 
 	result, err := runtime.ExecuteScript(
@@ -550,9 +544,6 @@ func TestBLSAggregateSignatures(t *testing.T) {
 			}
 			called = true
 			return ret, nil
-		},
-		validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-			return true, nil
 		},
 	}
 
@@ -618,9 +609,6 @@ func TestAggregateBLSPublicKeys(t *testing.T) {
 			}
 			called = true
 			return &PublicKey{PublicKey: ret, SignAlgo: SignatureAlgorithmBLS_BLS12_381}, nil
-		},
-		validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-			return true, nil
 		},
 	}
 
