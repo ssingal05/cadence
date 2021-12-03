@@ -1090,6 +1090,7 @@ func TestRuntimePublicKey(t *testing.T) {
 			}
 
 			value, err := executeScript(script, runtimeInterface)
+
 			assert.True(t, invoked, "validatePublicKey was invoked")
 
 			if validity {
@@ -1099,6 +1100,48 @@ func TestRuntimePublicKey(t *testing.T) {
 				assert.Error(t, err)
 				assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
 				assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+			}
+		}
+	})
+
+	t.Run("PublicKey from host env", func(t *testing.T) {
+		storage := newTestAccountKeyStorage()
+		storage.keys = append(storage.keys, accountKeyA, accountKeyB)
+
+		for index, _ := range storage.keys {
+			for _, validity := range []bool{true, false} {
+
+				script := fmt.Sprintf(`
+                  pub fun main(): PublicKey {
+                      // Get a public key from host env
+                      let acc = getAccount(0x02)
+                      let publicKey = acc.keys.get(keyIndex: %d)!.publicKey
+                      return publicKey
+                  }`,
+					index,
+				)
+
+				invoked := false
+
+				runtimeInterface := getAccountKeyTestRuntimeInterface(storage)
+				runtimeInterface.validatePublicKey = func(publicKey *PublicKey) (bool, error) {
+					invoked = true
+					return validity, nil
+				}
+
+				value, err := executeScript(script, runtimeInterface)
+
+				// TODO assert false when change is made to skip validation of  PublicKey from FVM
+				assert.True(t, invoked, "validatePublicKey was invoked")
+
+				if validity {
+					assert.NotNil(t, value)
+					require.NoError(t, err)
+				} else {
+					assert.Error(t, err)
+					assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
+					assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+				}
 			}
 		}
 	})
