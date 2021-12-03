@@ -1286,9 +1286,6 @@ func TestRuntimePublicKey(t *testing.T) {
 
 		runtimeInterface := &testRuntimeInterface{
 			storage: storage,
-			validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-				return true, nil
-			},
 		}
 
 		value, err := executeScript(script, runtimeInterface)
