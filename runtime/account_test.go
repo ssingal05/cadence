@@ -1019,9 +1019,6 @@ func TestRuntimePublicKey(t *testing.T) {
 
 		runtimeInterface := &testRuntimeInterface{
 			storage: storage,
-			validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-				return true, nil
-			},
 		}
 
 		value, err := executeScript(script, runtimeInterface)
@@ -1053,11 +1050,7 @@ func TestRuntimePublicKey(t *testing.T) {
             }
         `
 
-		runtimeInterface := &testRuntimeInterface{
-			validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-				return true, nil
-			},
-		}
+		runtimeInterface := &testRuntimeInterface{}
 
 		_, err := executeScript(script, runtimeInterface)
 		require.Error(t, err)
@@ -1248,9 +1241,6 @@ func TestRuntimePublicKey(t *testing.T) {
 
 		runtimeInterface := &testRuntimeInterface{
 			storage: storage,
-			validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-				return true, nil
-			},
 		}
 
 		_, err := executeScript(script, runtimeInterface)
