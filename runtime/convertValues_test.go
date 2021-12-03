@@ -3925,6 +3925,44 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 		require.ErrorAs(t, err, &argErr)
 	})
 
+	t.Run("Invalid content in public key", func(t *testing.T) {
+		script := `
+            pub fun main(key: PublicKey) {
+            }
+        `
+
+		publicKey := cadence.NewStruct(
+			[]cadence.Value{
+				// Invalid content for 'publicKey' field
+				cadence.NewArray([]cadence.Value{
+					cadence.String("1"),
+					cadence.String("2"),
+				}),
+
+				cadence.NewEnum(
+					[]cadence.Value{
+						cadence.NewUInt8(0),
+					},
+				).WithType(SignAlgoType),
+			},
+		).WithType(PublicKeyType)
+
+		storage := newTestLedger(nil, nil)
+
+		runtimeInterface := &testRuntimeInterface{
+			storage: storage,
+			decodeArgument: func(b []byte, t cadence.Type) (value cadence.Value, err error) {
+				return json.Decode(b)
+			},
+		}
+
+		_, err := executeScript(t, script, publicKey, runtimeInterface)
+		require.Error(t, err)
+
+		var argErr *InvalidEntryPointArgumentError
+		require.ErrorAs(t, err, &argErr)
+	})
+
 	t.Run("Invalid sign algo", func(t *testing.T) {
 		script := `
             pub fun main(key: PublicKey) {

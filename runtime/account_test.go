@@ -1108,7 +1108,7 @@ func TestRuntimePublicKey(t *testing.T) {
 		storage := newTestAccountKeyStorage()
 		storage.keys = append(storage.keys, accountKeyA, accountKeyB)
 
-		for index, _ := range storage.keys {
+		for index := range storage.keys {
 			for _, validity := range []bool{true, false} {
 
 				script := fmt.Sprintf(`

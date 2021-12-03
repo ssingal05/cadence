@@ -710,6 +710,22 @@ func wrapPanic(f func()) {
 	f()
 }
 
+func panicToInvalidPublicKeyError(f func()) (returnedError error) {
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			err, ok := r.(interpreter.InvalidPublicKeyError)
+			if ok {
+				returnedError = err
+			} else {
+				panic(r)
+			}
+		}
+	}()
+	f()
+	return nil
+}
+
 func (r *interpreterRuntime) transactionExecutionFunction(
 	parameters []*sema.Parameter,
 	arguments [][]byte,
@@ -786,7 +802,18 @@ func validateArgumentParams(
 			}
 		}
 
-		arg, err := importValue(inter, value, parameterType)
+		var arg interpreter.Value
+		maybeErr := panicToInvalidPublicKeyError(func() {
+			arg, err = importValue(inter, value, parameterType)
+		})
+
+		if maybeErr != nil {
+			return nil, &InvalidEntryPointArgumentError{
+				Index: i,
+				Err:   maybeErr,
+			}
+		}
+
 		if err != nil {
 			return nil, &InvalidEntryPointArgumentError{
 				Index: i,
