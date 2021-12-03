@@ -545,8 +545,16 @@ type InvalidPublicKeyError struct {
 }
 
 func (e InvalidPublicKeyError) Error() string {
-	return fmt.Sprintf(
-		"invalid public key at %s: %s. Originating error: %e",
-		e.LocationRange, e.PublicKey, e.OriginatingError,
-	)
+	if e.OriginatingError == nil {
+		return fmt.Sprintf("invalid public key %s at %s", e.PublicKey, e.LocationRange)
+	} else {
+		return fmt.Sprintf(
+			"invalid public key %s at %s. Originating error: %s",
+			e.PublicKey, e.LocationRange, e.OriginatingError.Error(),
+		)
+	}
+}
+
+func (e *InvalidPublicKeyError) Unwrap() error {
+	return e.OriginatingError
 }
