@@ -4179,6 +4179,149 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 		var argErr *InvalidEntryPointArgumentError
 		require.ErrorAs(t, err, &argErr)
 	})
+
+	t.Run("Missing publicKey", func(t *testing.T) {
+		script := `
+            pub fun main(key: PublicKey): [UInt8] {
+                return key.publicKey
+            }
+        `
+
+		jsonCdc := `
+            {
+                "type":"Struct",
+                "value":{
+                    "id":"PublicKey",
+                    "fields":[
+                        {
+                            "name":"signatureAlgorithm",
+                            "value":{
+                                "type":"Enum",
+                                "value":{
+                                    "id":"SignatureAlgorithm",
+                                    "fields":[
+                                        {
+                                            "name":"rawValue",
+                                            "value":{
+                                                "type":"UInt8",
+                                                "value":"0"
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        `
+
+		rt := newTestInterpreterRuntime()
+
+		publicKeyValidated := false
+
+		storage := newTestLedger(nil, nil)
+
+		runtimeInterface := &testRuntimeInterface{
+			storage: storage,
+			decodeArgument: func(b []byte, t cadence.Type) (value cadence.Value, err error) {
+				return json.Decode(b)
+			},
+			validatePublicKey: func(publicKey *PublicKey) (bool, error) {
+				publicKeyValidated = true
+				return true, nil
+			},
+		}
+
+		value, err := rt.ExecuteScript(
+			Script{
+				Source: []byte(script),
+				Arguments: [][]byte{
+					[]byte(jsonCdc),
+				},
+			},
+			Context{
+				Interface: runtimeInterface,
+				Location:  TestLocation,
+			},
+		)
+
+		assert.Contains(t, err.Error(),
+			"invalid argument at index 0: cannot import value of type 'PublicKey'. missing field 'publicKey'")
+		assert.False(t, publicKeyValidated)
+		assert.Nil(t, value)
+	})
+
+	t.Run("Missing signatureAlgorithm", func(t *testing.T) {
+		script := `
+            pub fun main(key: PublicKey): SignatureAlgorithm {
+                return key.signatureAlgorithm
+            }
+        `
+
+		jsonCdc := `
+            {
+                "type":"Struct",
+                "value":{
+                    "id":"PublicKey",
+                    "fields":[
+                        {
+                            "name":"publicKey",
+                            "value":{
+                                "type":"Array",
+                                "value":[
+                                    {
+                                        "type":"UInt8",
+                                        "value":"1"
+                                    },
+                                    {
+                                        "type":"UInt8",
+                                        "value":"2"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        `
+
+		rt := newTestInterpreterRuntime()
+
+		publicKeyValidated := false
+
+		storage := newTestLedger(nil, nil)
+
+		runtimeInterface := &testRuntimeInterface{
+			storage: storage,
+			decodeArgument: func(b []byte, t cadence.Type) (value cadence.Value, err error) {
+				return json.Decode(b)
+			},
+			validatePublicKey: func(publicKey *PublicKey) (bool, error) {
+				publicKeyValidated = true
+				return true, nil
+			},
+		}
+
+		value, err := rt.ExecuteScript(
+			Script{
+				Source: []byte(script),
+				Arguments: [][]byte{
+					[]byte(jsonCdc),
+				},
+			},
+			Context{
+				Interface: runtimeInterface,
+				Location:  TestLocation,
+			},
+		)
+
+		assert.Contains(t, err.Error(),
+			"invalid argument at index 0: cannot import value of type 'PublicKey'. missing field 'signatureAlgorithm'")
+		assert.False(t, publicKeyValidated)
+		assert.Nil(t, value)
+	})
+
 }
 
 func TestRuntimeImportExportComplex(t *testing.T) {
