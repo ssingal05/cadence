@@ -809,9 +809,15 @@ func validateArgumentParams(
 		})
 
 		if panicError != nil {
-			return nil, &InvalidEntryPointArgumentError{
-				Index: i,
-				Err:   panicError,
+			// The only potential user error here is InvalidPublicKeyError,
+			// so panic if any other error occurs.
+			if _, ok := panicError.(interpreter.InvalidPublicKeyError); ok {
+				return nil, &InvalidEntryPointArgumentError{
+					Index: i,
+					Err:   panicError,
+				}
+			} else {
+				panic(panicError)
 			}
 		}
 
