@@ -539,7 +539,7 @@ func (e InterfaceMissingLocationError) Error() string {
 
 // InvalidPublicKeyError is reported during PublicKey creation, if the PublicKey is invalid.
 type InvalidPublicKeyError struct {
-	PublicKey string
+	PublicKey *ArrayValue
 	LocationRange
 }
 

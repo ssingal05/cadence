@@ -11544,7 +11544,7 @@ func NewPublicKeyValue(
 	isValid := validatePublicKey(interpreter, getLocationRange, publicKeyValue)
 	if !isValid {
 		panic(InvalidPublicKeyError{
-			PublicKey:     fmt.Sprintf("%s ", publicKey),
+			PublicKey:     publicKey,
 			LocationRange: getLocationRange(),
 		})
 	}
