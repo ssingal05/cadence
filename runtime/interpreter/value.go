@@ -11541,10 +11541,12 @@ func NewPublicKeyValue(
 		sema.PublicKeyVerifyPoPFunction: publicKeyVerifyPoPFunction,
 	}
 
-	// Validate the public key.
 	isValid := validatePublicKey(interpreter, getLocationRange, publicKeyValue)
 	if !isValid {
-		panic(InvalidPublicKeyError{PublicKey: fmt.Sprintf("%s ", publicKey), LocationRange: getLocationRange()})
+		panic(InvalidPublicKeyError{
+			PublicKey:     fmt.Sprintf("%s ", publicKey),
+			LocationRange: getLocationRange(),
+		})
 	}
 
 	// Public key value to string should include the key even though it is a computed field

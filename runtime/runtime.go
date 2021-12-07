@@ -710,11 +710,11 @@ func wrapPanic(f func()) {
 	f()
 }
 
-func panicToInvalidPublicKeyError(f func()) (returnedError error) {
+func panicToError(f func()) (returnedError error) {
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
-			err, ok := r.(interpreter.InvalidPublicKeyError)
+			err, ok := r.(error)
 			if ok {
 				returnedError = err
 			} else {
@@ -803,14 +803,15 @@ func validateArgumentParams(
 		}
 
 		var arg interpreter.Value
-		maybeErr := panicToInvalidPublicKeyError(func() {
+		panicError := panicToError(func() {
+			// if importing an invalid public key, this call panics
 			arg, err = importValue(inter, value, parameterType)
 		})
 
-		if maybeErr != nil {
+		if panicError != nil {
 			return nil, &InvalidEntryPointArgumentError{
 				Index: i,
-				Err:   maybeErr,
+				Err:   panicError,
 			}
 		}
 
@@ -3228,7 +3229,6 @@ func validatePublicKey(
 	publicKeyValue *interpreter.CompositeValue,
 	runtimeInterface Interface,
 ) interpreter.BoolValue {
-
 	publicKey, err := NewPublicKeyFromValue(inter, getLocationRange, publicKeyValue)
 	if err != nil {
 		return false
@@ -3240,11 +3240,7 @@ func validatePublicKey(
 	})
 
 	if err != nil {
-		panic(interpreter.InvalidPublicKeyError{
-			PublicKey:        fmt.Sprintf("%s", publicKey),
-			LocationRange:    getLocationRange(),
-			OriginatingError: err,
-		})
+		panic(err)
 	}
 
 	return interpreter.BoolValue(valid)

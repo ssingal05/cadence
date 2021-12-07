@@ -541,20 +541,8 @@ func (e InterfaceMissingLocationError) Error() string {
 type InvalidPublicKeyError struct {
 	PublicKey string
 	LocationRange
-	OriginatingError error
 }
 
 func (e InvalidPublicKeyError) Error() string {
-	if e.OriginatingError == nil {
-		return fmt.Sprintf("invalid public key %s at %s", e.PublicKey, e.LocationRange)
-	} else {
-		return fmt.Sprintf(
-			"invalid public key %s at %s. Originating error: %s",
-			e.PublicKey, e.LocationRange, e.OriginatingError.Error(),
-		)
-	}
-}
-
-func (e *InvalidPublicKeyError) Unwrap() error {
-	return e.OriginatingError
+	return fmt.Sprintf("invalid public key %s at %s", e.PublicKey, e.LocationRange)
 }
