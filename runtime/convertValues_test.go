@@ -19,6 +19,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"unicode/utf8"
@@ -3766,9 +3767,9 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 	t.Run("Test importing validates PublicKey", func(t *testing.T) {
 		t.Parallel()
 
-		testPublicKeyImport := func(userSetValidity, publicKeyActualValidity bool) {
+		testPublicKeyImport := func(publicKeyActualValidity bool) {
 			t.Run(
-				fmt.Sprintf("UserSet(%v)|Actual(%v)", userSetValidity, publicKeyActualValidity),
+				fmt.Sprintf("Actual(%v)", publicKeyActualValidity),
 				func(t *testing.T) {
 
 					t.Parallel()
@@ -3819,15 +3820,16 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 						require.NoError(t, err)
 					} else {
 						require.Error(t, err)
+						assert.IsType(t, Error{}, err)
+						assert.IsType(t, &InvalidEntryPointArgumentError{}, errors.Unwrap(err))
+						assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
 					}
 				},
 			)
 		}
 
-		testPublicKeyImport(true, true)
-		testPublicKeyImport(true, false)
-		testPublicKeyImport(false, true)
-		testPublicKeyImport(false, false)
+		testPublicKeyImport(true)
+		testPublicKeyImport(false)
 	})
 
 	t.Run("Test Verify", func(t *testing.T) {
