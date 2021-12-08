@@ -2924,8 +2924,8 @@ func TestPublicKeyValue(t *testing.T) {
 			utils.TestLocation,
 			WithStorage(storage),
 			WithPublicKeyValidationHandler(
-				func(_ *Interpreter, _ func() LocationRange, _ *CompositeValue) BoolValue {
-					return true
+				func(_ *Interpreter, _ func() LocationRange, _ *CompositeValue) (BoolValue, error) {
+					return true, nil
 				},
 			),
 		)
@@ -2976,13 +2976,15 @@ func TestPublicKeyValue(t *testing.T) {
 
 		storage := NewInMemoryStorage()
 
+		fakeError := TransactionNotDeclaredError{97}
+
 		inter, err := NewInterpreter(
 			nil,
 			utils.TestLocation,
 			WithStorage(storage),
 			WithPublicKeyValidationHandler(
-				func(_ *Interpreter, _ func() LocationRange, _ *CompositeValue) BoolValue {
-					return false
+				func(_ *Interpreter, _ func() LocationRange, _ *CompositeValue) (BoolValue, error) {
+					return false, fakeError
 				},
 			),
 		)
@@ -3016,7 +3018,7 @@ func TestPublicKeyValue(t *testing.T) {
 		)
 
 		assert.PanicsWithValue(t,
-			InvalidPublicKeyError{PublicKey: publicKey},
+			InvalidPublicKeyError{PublicKey: publicKey, Err: fakeError},
 			func() {
 				_ = NewPublicKeyValue(
 					inter,

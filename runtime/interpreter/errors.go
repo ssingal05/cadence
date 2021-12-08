@@ -540,9 +540,14 @@ func (e InterfaceMissingLocationError) Error() string {
 // InvalidPublicKeyError is reported during PublicKey creation, if the PublicKey is invalid.
 type InvalidPublicKeyError struct {
 	PublicKey *ArrayValue
+	Err       error
 	LocationRange
 }
 
 func (e InvalidPublicKeyError) Error() string {
-	return fmt.Sprintf("invalid public key %s at %s", e.PublicKey, e.LocationRange)
+	if e.Err == nil {
+		return fmt.Sprintf("invalid public key %s at %s", e.PublicKey, e.LocationRange)
+	} else {
+		return fmt.Sprintf("invalid public key %s at %s with error %s", e.PublicKey, e.LocationRange, e.Err)
+	}
 }

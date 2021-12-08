@@ -369,8 +369,8 @@ func TestExportValue(t *testing.T) {
 							_ *interpreter.Interpreter,
 							_ func() interpreter.LocationRange,
 							_ *interpreter.CompositeValue,
-						) interpreter.BoolValue {
-							return true
+						) (interpreter.BoolValue, error) {
+							return true, nil
 						},
 					),
 					stdlib.NewHashAlgorithmCase(inter, 1),

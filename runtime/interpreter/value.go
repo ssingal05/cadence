@@ -11541,10 +11541,11 @@ func NewPublicKeyValue(
 		sema.PublicKeyVerifyPoPFunction: publicKeyVerifyPoPFunction,
 	}
 
-	isValid := validatePublicKey(interpreter, getLocationRange, publicKeyValue)
+	isValid, err := validatePublicKey(interpreter, getLocationRange, publicKeyValue)
 	if !isValid {
 		panic(InvalidPublicKeyError{
 			PublicKey:     publicKey,
+			Err:           err,
 			LocationRange: getLocationRange(),
 		})
 	}
