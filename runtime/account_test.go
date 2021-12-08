@@ -1103,37 +1103,51 @@ func TestRuntimePublicKey(t *testing.T) {
 
 		for index := range storage.keys {
 			for _, validity := range []bool{true, false} {
+				for _, panics := range []bool{true, false} {
 
-				script := fmt.Sprintf(`
+					script := fmt.Sprintf(`
                   pub fun main(): PublicKey {
                       // Get a public key from host env
                       let acc = getAccount(0x02)
                       let publicKey = acc.keys.get(keyIndex: %d)!.publicKey
                       return publicKey
                   }`,
-					index,
-				)
+						index,
+					)
 
-				invoked := false
+					invoked := false
 
-				runtimeInterface := getAccountKeyTestRuntimeInterface(storage)
-				runtimeInterface.validatePublicKey = func(publicKey *PublicKey) (bool, error) {
-					invoked = true
-					return validity, nil
-				}
+					fakeError := interpreter.InvalidPathDomainError{}
 
-				value, err := executeScript(script, runtimeInterface)
+					runtimeInterface := getAccountKeyTestRuntimeInterface(storage)
+					runtimeInterface.validatePublicKey = func(publicKey *PublicKey) (bool, error) {
+						invoked = true
+						if panics {
+							return false, fakeError
+						} else {
+							return validity, nil
+						}
+					}
 
-				// TODO assert false when change is made to skip validation of  PublicKey from FVM
-				assert.True(t, invoked, "validatePublicKey was invoked")
+					value, err := executeScript(script, runtimeInterface)
 
-				if validity {
-					assert.NotNil(t, value)
-					require.NoError(t, err)
-				} else {
-					assert.Error(t, err)
-					assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
-					assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+					// TODO assert false when change is made to skip validation of PublicKey from FVM
+					assert.True(t, invoked, "validatePublicKey was invoked")
+
+					if panics {
+						assert.Nil(t, value)
+						assert.Error(t, err)
+						assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
+						assert.Equal(t, fakeError, errors.Unwrap(errors.Unwrap(err)))
+					} else if validity {
+						assert.NotNil(t, value)
+						require.NoError(t, err)
+					} else {
+						assert.Error(t, err)
+						assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
+						assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+						assert.Equal(t, nil, errors.Unwrap(errors.Unwrap(errors.Unwrap(err))))
+					}
 				}
 			}
 		}
