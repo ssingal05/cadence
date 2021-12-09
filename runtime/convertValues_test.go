@@ -19,7 +19,6 @@
 package runtime
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 	"unicode/utf8"
@@ -3775,8 +3774,7 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 					t.Parallel()
 
 					script := `
-                        pub fun main(key: PublicKey): Bool {
-                            return true
+                        pub fun main(key: PublicKey) {
                         }
                     `
 
@@ -3820,9 +3818,9 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 						require.NoError(t, err)
 					} else {
 						require.Error(t, err)
-						assert.IsType(t, Error{}, err)
-						assert.IsType(t, &InvalidEntryPointArgumentError{}, errors.Unwrap(err))
-						assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+						var invalidEntryPointArgumentError *InvalidEntryPointArgumentError
+						require.ErrorAs(t, err, &invalidEntryPointArgumentError)
+						assert.ErrorAs(t, err, &interpreter.InvalidPublicKeyError{})
 					}
 				},
 			)

@@ -1075,7 +1075,7 @@ func TestRuntimePublicKey(t *testing.T) {
 
 				storage := newTestLedger(nil, nil)
 
-				fakeError := interpreter.InvalidPathDomainError{}
+				fakeError := &interpreter.InvalidPathDomainError{}
 
 				runtimeInterface := &testRuntimeInterface{
 					storage: storage,
@@ -1097,16 +1097,14 @@ func TestRuntimePublicKey(t *testing.T) {
 				if panics {
 					assert.Nil(t, value)
 					assert.Error(t, err)
-					assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
+					// verifies the exact error
 					assert.Equal(t, fakeError, errors.Unwrap(errors.Unwrap(err)))
 				} else if validity {
 					assert.NotNil(t, value)
 					require.NoError(t, err)
 				} else {
 					assert.Error(t, err)
-					assert.IsType(t, interpreter.Error{}, errors.Unwrap(err)) // TODO is this type too general?
-					assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
-					assert.Equal(t, nil, errors.Unwrap(errors.Unwrap(errors.Unwrap(err))))
+					assert.ErrorAs(t, err, &interpreter.InvalidPublicKeyError{})
 				}
 			}
 		}
