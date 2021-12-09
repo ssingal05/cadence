@@ -3018,7 +3018,7 @@ func (r *interpreterRuntime) newAccountKeysGetFunction(
 					inter,
 					invocation.GetLocationRange,
 					accountKey,
-					inter.PublicKeyValidationHandler,
+					alwaysValidates, // key from FVM has already been validated
 				),
 			)
 		},
@@ -3068,7 +3068,7 @@ func (r *interpreterRuntime) newAccountKeysRevokeFunction(
 					inter,
 					invocation.GetLocationRange,
 					accountKey,
-					inter.PublicKeyValidationHandler,
+					alwaysValidates, // key from FVM has already been validated
 				),
 			)
 		},
@@ -3390,4 +3390,12 @@ func hash(
 	}
 
 	return interpreter.ByteSliceToByteArrayValue(inter, result)
+}
+
+func alwaysValidates(
+	_ *interpreter.Interpreter,
+	_ func() interpreter.LocationRange,
+	_ *interpreter.CompositeValue,
+) (interpreter.BoolValue, error) {
+	return true, nil
 }

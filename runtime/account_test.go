@@ -1070,29 +1070,44 @@ func TestRuntimePublicKey(t *testing.T) {
             `
 
 		for _, validity := range []bool{true, false} {
-			invoked := false
+			for _, panics := range []bool{true, false} {
+				invoked := false
 
-			storage := newTestLedger(nil, nil)
+				storage := newTestLedger(nil, nil)
 
-			runtimeInterface := &testRuntimeInterface{
-				storage: storage,
-				validatePublicKey: func(publicKey *PublicKey) (bool, error) {
-					invoked = true
-					return validity, nil
-				},
-			}
+				fakeError := interpreter.InvalidPathDomainError{}
 
-			value, err := executeScript(script, runtimeInterface)
+				runtimeInterface := &testRuntimeInterface{
+					storage: storage,
+					validatePublicKey: func(publicKey *PublicKey) (bool, error) {
+						invoked = true
+						if panics {
+							return false, fakeError
+						} else {
+							return validity, nil
+						}
 
-			assert.True(t, invoked, "validatePublicKey was invoked")
+					},
+				}
 
-			if validity {
-				assert.NotNil(t, value)
-				require.NoError(t, err)
-			} else {
-				assert.Error(t, err)
-				assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
-				assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+				value, err := executeScript(script, runtimeInterface)
+
+				assert.True(t, invoked, "validatePublicKey was invoked")
+
+				if panics {
+					assert.Nil(t, value)
+					assert.Error(t, err)
+					assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
+					assert.Equal(t, fakeError, errors.Unwrap(errors.Unwrap(err)))
+				} else if validity {
+					assert.NotNil(t, value)
+					require.NoError(t, err)
+				} else {
+					assert.Error(t, err)
+					assert.IsType(t, interpreter.Error{}, errors.Unwrap(err)) // TODO is this type too general?
+					assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
+					assert.Equal(t, nil, errors.Unwrap(errors.Unwrap(errors.Unwrap(err))))
+				}
 			}
 		}
 	})
@@ -1102,54 +1117,31 @@ func TestRuntimePublicKey(t *testing.T) {
 		storage.keys = append(storage.keys, accountKeyA, accountKeyB)
 
 		for index := range storage.keys {
-			for _, validity := range []bool{true, false} {
-				for _, panics := range []bool{true, false} {
+			script := fmt.Sprintf(`
+                          pub fun main(): PublicKey {
+                              // Get a public key from host env
+                              let acc = getAccount(0x02)
+                              let publicKey = acc.keys.get(keyIndex: %d)!.publicKey
+                              return publicKey
+                          }`,
+				index,
+			)
 
-					script := fmt.Sprintf(`
-                  pub fun main(): PublicKey {
-                      // Get a public key from host env
-                      let acc = getAccount(0x02)
-                      let publicKey = acc.keys.get(keyIndex: %d)!.publicKey
-                      return publicKey
-                  }`,
-						index,
-					)
+			invoked := false
 
-					invoked := false
-
-					fakeError := interpreter.InvalidPathDomainError{}
-
-					runtimeInterface := getAccountKeyTestRuntimeInterface(storage)
-					runtimeInterface.validatePublicKey = func(publicKey *PublicKey) (bool, error) {
-						invoked = true
-						if panics {
-							return false, fakeError
-						} else {
-							return validity, nil
-						}
-					}
-
-					value, err := executeScript(script, runtimeInterface)
-
-					// TODO assert false when change is made to skip validation of PublicKey from FVM
-					assert.True(t, invoked, "validatePublicKey was invoked")
-
-					if panics {
-						assert.Nil(t, value)
-						assert.Error(t, err)
-						assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
-						assert.Equal(t, fakeError, errors.Unwrap(errors.Unwrap(err)))
-					} else if validity {
-						assert.NotNil(t, value)
-						require.NoError(t, err)
-					} else {
-						assert.Error(t, err)
-						assert.IsType(t, interpreter.Error{}, errors.Unwrap(err))
-						assert.IsType(t, interpreter.InvalidPublicKeyError{}, errors.Unwrap(errors.Unwrap(err)))
-						assert.Equal(t, nil, errors.Unwrap(errors.Unwrap(errors.Unwrap(err))))
-					}
-				}
+			runtimeInterface := getAccountKeyTestRuntimeInterface(storage)
+			runtimeInterface.validatePublicKey = func(publicKey *PublicKey) (bool, error) {
+				invoked = true
+				return false, nil
 			}
+
+			value, err := executeScript(script, runtimeInterface)
+
+			// skip validation when key comes from host env aka FVM
+			assert.False(t, invoked, "validatePublicKey was not invoked")
+
+			assert.IsType(t, cadence.Struct{}, value)
+			assert.Nil(t, err)
 		}
 	})
 
