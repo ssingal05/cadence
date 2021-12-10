@@ -32,6 +32,7 @@ import (
 	"github.com/onflow/cadence/runtime/common"
 	. "github.com/onflow/cadence/runtime/interpreter"
 	"github.com/onflow/cadence/runtime/sema"
+	"github.com/onflow/cadence/runtime/stdlib"
 	checkerUtils "github.com/onflow/cadence/runtime/tests/checker"
 	"github.com/onflow/cadence/runtime/tests/utils"
 )
@@ -2942,18 +2943,9 @@ func TestPublicKeyValue(t *testing.T) {
 			NewIntValueFromInt64(3),
 		)
 
-		sigAlgo := NewCompositeValue(
+		sigAlgo := stdlib.NewSignatureAlgorithmCase(
 			inter,
-			nil,
-			sema.SignatureAlgorithmType.QualifiedIdentifier(),
-			sema.SignatureAlgorithmType.Kind,
-			[]CompositeField{
-				{
-					Name:  sema.EnumRawValueFieldName,
-					Value: UInt8Value(sema.SignatureAlgorithmECDSA_secp256k1.RawValue()),
-				},
-			},
-			common.Address{},
+			sema.SignatureAlgorithmECDSA_secp256k1.RawValue(),
 		)
 
 		key := NewPublicKeyValue(
@@ -2976,7 +2968,7 @@ func TestPublicKeyValue(t *testing.T) {
 
 		storage := NewInMemoryStorage()
 
-		fakeError := TransactionNotDeclaredError{97}
+		fakeError := fakeError{}
 
 		inter, err := NewInterpreter(
 			nil,
@@ -3003,18 +2995,9 @@ func TestPublicKeyValue(t *testing.T) {
 			NewIntValueFromInt64(int64(publicKeyBytes[2])),
 		)
 
-		sigAlgo := NewCompositeValue(
+		sigAlgo := stdlib.NewSignatureAlgorithmCase(
 			inter,
-			nil,
-			sema.SignatureAlgorithmType.QualifiedIdentifier(),
-			sema.SignatureAlgorithmType.Kind,
-			[]CompositeField{
-				{
-					Name:  sema.EnumRawValueFieldName,
-					Value: UInt8Value(sema.SignatureAlgorithmECDSA_secp256k1.RawValue()),
-				},
-			},
-			common.Address{},
+			sema.SignatureAlgorithmECDSA_secp256k1.RawValue(),
 		)
 
 		assert.PanicsWithValue(t,
@@ -3196,4 +3179,10 @@ func TestNonStorable(t *testing.T) {
 	_, err = inter.Invoke("foo")
 	require.NoError(t, err)
 
+}
+
+type fakeError struct{}
+
+func (fakeError) Error() string {
+	return "fake error for testing"
 }

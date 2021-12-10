@@ -19,7 +19,6 @@
 package runtime
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
@@ -1075,7 +1074,7 @@ func TestRuntimePublicKey(t *testing.T) {
 
 				storage := newTestLedger(nil, nil)
 
-				fakeError := &interpreter.InvalidPathDomainError{}
+				fakeError := &fakeError{}
 
 				runtimeInterface := &testRuntimeInterface{
 					storage: storage,
@@ -1097,8 +1096,7 @@ func TestRuntimePublicKey(t *testing.T) {
 				if panics {
 					assert.Nil(t, value)
 					assert.Error(t, err)
-					// verifies the exact error
-					assert.Equal(t, fakeError, errors.Unwrap(errors.Unwrap(err)))
+					assert.ErrorIs(t, err, fakeError)
 				} else if validity {
 					assert.NotNil(t, value)
 					require.NoError(t, err)
@@ -1754,4 +1752,10 @@ func TestGetAuthAccount(t *testing.T) {
 
 		assert.IsType(t, &sema.NotDeclaredError{}, errs[0])
 	})
+}
+
+type fakeError struct{}
+
+func (fakeError) Error() string {
+	return "fake error for testing"
 }
