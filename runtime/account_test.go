@@ -1091,7 +1091,7 @@ func TestRuntimePublicKey(t *testing.T) {
 
 				value, err := executeScript(script, runtimeInterface)
 
-				assert.True(t, invoked, "validatePublicKey was invoked")
+				assert.True(t, invoked, "validatePublicKey was not invoked")
 
 				if panics {
 					assert.Nil(t, value)
