@@ -546,8 +546,8 @@ type InvalidPublicKeyError struct {
 
 func (e InvalidPublicKeyError) Error() string {
 	if e.Err == nil {
-		return fmt.Sprintf("invalid public key %s at %s", e.PublicKey, e.LocationRange)
+		return fmt.Sprintf("invalid public key %s", e.PublicKey)
 	} else {
-		return fmt.Sprintf("invalid public key %s at %s with error %s", e.PublicKey, e.LocationRange, e.Err)
+		return fmt.Sprintf("invalid public key %s with error %s", e.PublicKey, e.Err)
 	}
 }
