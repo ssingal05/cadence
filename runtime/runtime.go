@@ -710,6 +710,8 @@ func wrapPanic(f func()) {
 	f()
 }
 
+// Executes `f`. On panic, the panic is returned as an error.
+// Wraps any non-`error` panics so panic is never propagated.
 func panicToError(f func()) (returnedError error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -718,12 +720,27 @@ func panicToError(f func()) (returnedError error) {
 			if ok {
 				returnedError = err
 			} else {
-				panic(r)
+				returnedError = fmt.Errorf("%s", r)
 			}
 		}
 	}()
 	f()
 	return nil
+}
+
+// Executes `f`. On panic, the panic is returned as an error.
+// Exception: panics when error is `goRuntime.Error` or `ExternalError`.
+func userPanicToError(f func()) (returnedError error) {
+	err := panicToError(f)
+
+	switch err := err.(type) {
+	case goRuntime.Error, interpreter.ExternalError:
+		panic(err)
+	default:
+		returnedError = err
+	}
+
+	return err
 }
 
 func (r *interpreterRuntime) transactionExecutionFunction(
@@ -803,21 +820,15 @@ func validateArgumentParams(
 		}
 
 		var arg interpreter.Value
-		panicError := panicToError(func() {
+		panicError := userPanicToError(func() {
 			// if importing an invalid public key, this call panics
 			arg, err = importValue(inter, value, parameterType)
 		})
 
 		if panicError != nil {
-			// The only potential user error here is InvalidPublicKeyError,
-			// so panic if any other error occurs.
-			if _, ok := panicError.(interpreter.InvalidPublicKeyError); ok {
-				return nil, &InvalidEntryPointArgumentError{
-					Index: i,
-					Err:   panicError,
-				}
-			} else {
-				panic(panicError)
+			return nil, &InvalidEntryPointArgumentError{
+				Index: i,
+				Err:   panicError,
 			}
 		}
 

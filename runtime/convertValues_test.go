@@ -3817,9 +3817,9 @@ func TestRuntimePublicKeyImport(t *testing.T) {
 					if publicKeyActualValidity {
 						require.NoError(t, err)
 					} else {
-						require.Error(t, err)
+						assert.Error(t, err)
 						var invalidEntryPointArgumentError *InvalidEntryPointArgumentError
-						require.ErrorAs(t, err, &invalidEntryPointArgumentError)
+						assert.ErrorAs(t, err, &invalidEntryPointArgumentError)
 						assert.ErrorAs(t, err, &interpreter.InvalidPublicKeyError{})
 					}
 				},

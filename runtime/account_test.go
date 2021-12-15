@@ -1096,10 +1096,10 @@ func TestRuntimePublicKey(t *testing.T) {
 				if panics {
 					assert.Nil(t, value)
 					assert.Error(t, err)
-					assert.ErrorIs(t, err, fakeError)
+					assert.ErrorAs(t, err, &fakeError)
 				} else if validity {
 					assert.NotNil(t, value)
-					require.NoError(t, err)
+					assert.NoError(t, err)
 				} else {
 					assert.Error(t, err)
 					assert.ErrorAs(t, err, &interpreter.InvalidPublicKeyError{})
