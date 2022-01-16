@@ -17,7 +17,7 @@
  */
 
 import {go} from './go.js'
-import WebAssemblyInstantiatedSource = WebAssembly.WebAssemblyInstantiatedSource
+import * as fs from 'fs';
 
 declare global {
   namespace NodeJS {
@@ -53,16 +53,9 @@ export class CadenceParser {
   }
 
   private static async load(urlOrBinary: string | BufferSource): Promise<void> {
-    let instantiatedSource: WebAssemblyInstantiatedSource
-    if (typeof urlOrBinary === 'string') {
-      const binaryRequest = fetch(urlOrBinary)
-      instantiatedSource = (await WebAssembly.instantiateStreaming(binaryRequest, go.importObject))
-    } else {
-      instantiatedSource = await WebAssembly.instantiate(urlOrBinary, go.importObject);
-    }
-
-    // NOTE: don't await the promise, just ignore it, as it is only resolved when the program exists
-    go.run(instantiatedSource.instance).then(() => {})
+    const wasmBuffer = fs.readFileSync(urlOrBinary.toString());
+    const instance: WebAssembly.Instance = await (await WebAssembly.instantiate(wasmBuffer, go.importObject)).instance
+    go.run(instance).then(() => {})
   }
 
   private constructor() {}
