@@ -266,8 +266,7 @@ class Go {
 
 				// func getRandomData(r []byte)
 				"runtime.getRandomData": (sp) => {
-					sp >>>= 0;
-					crypto.getRandomValues(loadSlice(sp + 8));
+					sp
 				},
 
 				// func finalizeRef(v ref)
